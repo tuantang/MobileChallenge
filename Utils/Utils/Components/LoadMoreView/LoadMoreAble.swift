@@ -39,36 +39,39 @@ extension LoadMoreAble {
     public func attach(to scrollView: UIScrollView) {
         guard self.scrollView == nil else { return }
         self.scrollView = scrollView
-        scrollView.rx.contentOffset.observe(on:MainScheduler.asyncInstance).subscribe(onNext: { [weak self] (offset) in
-            guard let self = self else { return }
-            guard self.isEnabled else {
-                scrollView.contentInset = self.originalContentInset
-                return
-            }
-            
-            let frame = scrollView.frame
-            let contentHeight = scrollView.contentSize.height
-            guard contentHeight > frame.height else { return }
-            if self.indicator.superview == nil {
-                self.originalContentInset = scrollView.contentInset
-            }
-            
-            var contentInset = scrollView.contentInset
-            let indicatorHeight: CGFloat = 30
-            contentInset.bottom = self.originalContentInset.bottom + indicatorHeight + 10
-            scrollView.contentInset = contentInset
-            scrollView.addSubview(self.indicator)
-            self.indicator.center = CGPoint(x: frame.width / 2, y: contentHeight + indicatorHeight - self.indicator.frame.height / 2)
-            
-            let triggerHeight = frame.height * 0.1
-            if !self.isLoading, offset.y > contentHeight - triggerHeight - frame.height {
-                self.isLoading = true
-                self.indicator.startAnimating()
-                self.delegate?.triggerLoading(view: self)
-            }
-            
-            self.delegate?.didAttach(view: self)
-        }).disposed(by: bag)
+        scrollView
+            .rx
+            .contentOffset
+            .observe(on: MainScheduler.asyncInstance)
+            .subscribe(onNext: { [weak self] (offset) in
+                guard let self = self else { return }
+                guard self.isEnabled else {
+                    scrollView.contentInset = self.originalContentInset
+                    return
+                }
+
+                let frame = scrollView.frame
+                let contentHeight = scrollView.contentSize.height
+                guard contentHeight > frame.height else { return }
+                if self.indicator.superview == nil {
+                    self.originalContentInset = scrollView.contentInset
+                }
+
+                var contentInset = scrollView.contentInset
+                let indicatorHeight: CGFloat = 30
+                contentInset.bottom = self.originalContentInset.bottom + indicatorHeight + 10
+                scrollView.contentInset = contentInset
+                scrollView.addSubview(self.indicator)
+                self.indicator.center = CGPoint(x: frame.width / 2, y: contentHeight + indicatorHeight - self.indicator.frame.height / 2)
+
+                let triggerHeight = frame.height * 0.1
+                if !self.isLoading, offset.y > contentHeight - triggerHeight - frame.height {
+                    self.isLoading = true
+                    self.indicator.startAnimating()
+                    self.delegate?.triggerLoading(view: self)
+                }
+                self.delegate?.didAttach(view: self)
+            }).disposed(by: bag)
     }
     
     public func detach() {
